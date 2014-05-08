@@ -101,7 +101,7 @@ REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), 
 
 
 ------------------------------------------------------------------------------------------------------------------------
-ALTER view [dbo].[RIPSAP] AS
+Alter view [dbo].[RIPSAP] AS
 select a.fac, '252900032901' as habilitacion, 
 CodTipoIdentificacionPaciente  = CASE WHEN CodTipoIdentificacionPaciente = 'NU' THEN 'RC'
 WHEN CodTipoIdentificacionPaciente = 'SNI' THEN 'RC' 
@@ -112,11 +112,11 @@ REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), 
 	 CodCompleto = CASE WHEN len(CodCompleto) > 6 THEN SUBSTRING(CodCompleto, 3, len(CodCompleto)) 
 
 		ELSE CodCompleto end
-, '1' as unoo, '4' as cuatro, '5' as cinco, '' as dx, '' as esp1,
+, '1' as unoo, '4' as cuatro, '5' as cinco, dx as dx, '' as esp1,
 '' as esp2, cantidad ,  valor_eps  from HC a where  not SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 ---------------------------------------------------------------------------------------------------------------
-CREATE  VIEW [dbo].[PacientesRIPS1]
+ALTER  VIEW [dbo].[PacientesRIPS1]
 AS
 SELECT       
 CodTipoIdentificacion = CASE WHEN B.Codigo = 'NU' THEN 'RC'
@@ -128,7 +128,7 @@ REPLACE(LTRIM(RTRIM(A.codigo)), '.', '') AS NumeroIdentificacion, G.Codigo AS Co
                        Edad = CASE WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) < 30 THEN DATEDIFF(d, 
                       A.FNacimiento, GETDATE()) WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) >= 30 AND DATEDIFF(m, A.FNacimiento, GETDATE()) 
                       < 12 THEN DATEDIFF(m, A.FNacimiento, GETDATE()) WHEN DATEDIFF(yy, A.FNacimiento, GETDATE()) >= 1 THEN DATEDIFF(yy, A.FNacimiento, 
-                      GETDATE()) END, '1' as unidad_edad, C.Codigo AS Sexo, '25' AS CodDepartamento, '290' AS CodMunicipio, F.Codigo AS ZonaResidencial
+                      GETDATE()) END, '1' as unidad_edad, C.Codigo AS Sexo, '25' AS CodDepartamento, '290' AS CodMunicipio, F.Codigo AS ZonaResidencial, a.ID AS PacienteID
 FROM         dbo.Pacientes A INNER JOIN
                       dbo.BAS_TiposDocIdentificacion B ON A.IDBAS_TiposDocIdentificacion = B.ID INNER JOIN
                       dbo.BAS_Generos C ON A.IDBAS_Generos = C.ID INNER JOIN
@@ -144,13 +144,13 @@ FROM         dbo.Pacientes A INNER JOIN
 
 --------------------------------------------------------------------------------------------------------------------
 
-CREATE VIEW [dbo].[FacturasRIPS] as
-select '252900032901' as habilitacion,'MEDSALUD IPS' as ips, 'NI' AS ni, '900013381' as nit, dbo.DocsFacturas.Codigo,'05/04/2014' as fecha_rips, '01/01/2014' as fecha_ini,'031/01/2014' as fecha_fin, dbo.EPS.Codigo  as eps_codigo, dbo.EPS.Nombre as eps_nombre, dbo.EPS.Codigo as eps_codigo2,'' as va1,'' as va2,cast(sum(dbo.DocsFacturasDetalles.VlrPaciente)as int) as Valortotalpaciente,'0' as cer1,'0' as cer2,cast(sum(dbo.DocsFacturasDetalles.VlrEPS)as int)AS ValortotalEPS, dbo.DocsFacturas.Fecha  as fecha2, dbo.Pacientes.Codigo as Paciente
+ALTER VIEW [dbo].[FacturasRIPS] as
+select '252900032901' as habilitacion,'MEDSALUD IPS' as ips, 'NI' AS ni, '900013381' as nit, dbo.DocsFacturas.Codigo,'05/04/2014' as fecha_rips, '01/01/2014' as fecha_ini,'031/01/2014' as fecha_fin, dbo.EPS.Codigo  as eps_codigo, dbo.EPS.Nombre as eps_nombre, dbo.EPS.Codigo as eps_codigo2,'' as va1,'' as va2,cast(sum(dbo.DocsFacturasDetalles.VlrPaciente)as int) as Valortotalpaciente,'0' as cer1,'0' as cer2,cast(sum(dbo.DocsFacturasDetalles.VlrEPS)as int)AS ValortotalEPS, dbo.DocsFacturas.Fecha  as fecha2, dbo.Pacientes.Codigo as Paciente, dbo.DocsFacturas.IDPaciente  as PacienteID
  from dbo.DocsFacturas,dbo.DocsFacturasDetalles,dbo.Pacientes, dbo.EPS
 where 
 dbo.EPS.ID = dbo.DocsFacturas.IDEPS and
 dbo.DocsFacturas.ID = dbo.DocsFacturasDetalles.IDDocsFacturas and dbo.DocsFacturas.IDPaciente = dbo.Pacientes.ID
-group by dbo.EPS.Codigo,dbo.EPS.Nombre,dbo.DocsFacturas.Codigo,dbo.DocsFacturas.Fecha, dbo.Pacientes.Codigo, dbo.Pacientes.Nombre1, dbo.Pacientes.Nombre2, dbo.Pacientes.Apellido1, dbo.Pacientes.Apellido2
+group by dbo.EPS.Codigo,dbo.EPS.Nombre,dbo.DocsFacturas.Codigo,dbo.DocsFacturas.Fecha, dbo.Pacientes.Codigo, dbo.Pacientes.Nombre1, dbo.Pacientes.Nombre2, dbo.Pacientes.Apellido1, dbo.Pacientes.Apellido2,dbo.DocsFacturas.IDPaciente
 
 
 ---------------------------------------------------------------------------------------------------------------
