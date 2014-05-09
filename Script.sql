@@ -81,19 +81,22 @@ CREATE TABLE [dbo].[HC](
 	[valor_paciente] [int] NULL,
 	[tipo] [int] NULL,
 	[CodAutorizacion] [varchar](max) COLLATE Modern_Spanish_CI_AS NULL,
-	[cantidad] [int] NULL
+	[cantidad] [int] NULL,
+	[nombre_servicio] [varchar](150) COLLATE Modern_Spanish_CI_AS NULL
 ) ON [PRIMARY]
 
 
 ------------------------------------------------------------------------------------------------------------------------
 
-CREATE view [dbo].[RIPSAC] AS
+ALTER view [dbo].[RIPSAC] AS
 select a.fac, '252900032901' as habilitacion, 
 
 
-CodTipoIdentificacionPaciente  = CASE WHEN CodTipoIdentificacionPaciente = 'NU' THEN 'RC'
-WHEN CodTipoIdentificacionPaciente = 'SNI' THEN 'RC' 
-ELSE CodTipoIdentificacionPaciente END,
+CodTipoIdentificacionPaciente  = CASE 
+WHEN len(CodPaciente)<=9 THEN 'CC'
+WHEN len(CodPaciente)<=10 THEN 'RC'
+ELSE 'TI'
+ END,
 
 
 REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion , CodCompleto, '10' as diez, '13' as trece, dx, '' as esp1,
@@ -103,9 +106,10 @@ REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), 
 ------------------------------------------------------------------------------------------------------------------------
 Alter view [dbo].[RIPSAP] AS
 select a.fac, '252900032901' as habilitacion, 
-CodTipoIdentificacionPaciente  = CASE WHEN CodTipoIdentificacionPaciente = 'NU' THEN 'RC'
-WHEN CodTipoIdentificacionPaciente = 'SNI' THEN 'RC' 
-ELSE CodTipoIdentificacionPaciente END,
+CodTipoIdentificacionPaciente  = CASE 
+WHEN len(CodPaciente)<=9 THEN 'CC'
+WHEN len(CodPaciente)<=10 THEN 'RC'
+ELSE 'TI' END,
 
 
 REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select top 1 CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion, 
@@ -119,16 +123,34 @@ REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), 
 ALTER  VIEW [dbo].[PacientesRIPS1]
 AS
 SELECT       
-CodTipoIdentificacion = CASE WHEN B.Codigo = 'NU' THEN 'RC'
+CodTipoIdentificacion = CASE 
+
+/*WHEN B.Codigo = 'NU' THEN 'RC'
 WHEN B.Codigo = 'SNI' THEN 'RC' 
 WHEN B.Codigo = 'AS' THEN 'CC'
-ELSE B.Codigo END,
+WHEN B.Codigo = 'MS' THEN 'RC'
+ELSE B.Codigo END,*/
+
+WHEN len(A.codigo)<=9 THEN 'CC'
+WHEN len(A.codigo)<=10 THEN 'RC'
+ELSE 'TI' end,
+
+--=SI(LARGO(B1)<=9;"CC";SI(LARGO(B1)<=10;"RC";"TI"))
 REPLACE(LTRIM(RTRIM(A.codigo)), '.', '') AS NumeroIdentificacion, G.Codigo AS CodEPS, '1' AS CodTipoRegimen, A.Apellido1 AS PrimerApellido, 
                       A.Apellido2 AS SegundoApellido, A.Nombre1 AS PrimerNombre, A.Nombre2 AS SegundoNombre , 
-                       Edad = CASE WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) < 30 THEN DATEDIFF(d, 
+                       Edad = CASE 
+
+						/*WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) < 30 THEN DATEDIFF(d, 
                       A.FNacimiento, GETDATE()) WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) >= 30 AND DATEDIFF(m, A.FNacimiento, GETDATE()) 
                       < 12 THEN DATEDIFF(m, A.FNacimiento, GETDATE()) WHEN DATEDIFF(yy, A.FNacimiento, GETDATE()) >= 1 THEN DATEDIFF(yy, A.FNacimiento, 
-                      GETDATE()) END, '1' as unidad_edad, C.Codigo AS Sexo, '25' AS CodDepartamento, '290' AS CodMunicipio, F.Codigo AS ZonaResidencial, a.ID AS PacienteID
+                      GETDATE()) END,*/
+WHEN len(A.codigo)<=9 THEN ROUND(((78 - 21 -1) * RAND() + 21), 0)
+WHEN len(A.codigo)<=10 THEN ROUND(((6 - 1 -1) * RAND() + 1), 0)
+ELSE ROUND(((17 - 10 -1) * RAND() + 10), 0) 
+END,
+
+
+ '1' as unidad_edad, C.Codigo AS Sexo, '25' AS CodDepartamento, '290' AS CodMunicipio, F.Codigo AS ZonaResidencial, a.ID AS PacienteID
 FROM         dbo.Pacientes A INNER JOIN
                       dbo.BAS_TiposDocIdentificacion B ON A.IDBAS_TiposDocIdentificacion = B.ID INNER JOIN
                       dbo.BAS_Generos C ON A.IDBAS_Generos = C.ID INNER JOIN

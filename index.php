@@ -3,7 +3,7 @@ $sufijo = "042014";
 $fecha_generacion = "05/05/2014";
 $fecha_ini = "01/04/2014";
 $fecha_fin = "30/04/2014";
-$eps = "EPS002";
+$eps = "EPS037";
 ini_set('max_execution_time', 30000);
 $serverName = 'INGERA-VAIO\SQLEXPRESS';
 $connParams = array('UID'=>'sa', 'PWD'=>'sa', 'Database'=>'SUNTTEL_DBMEDICS','ReturnDatesAsStrings'=> true);
@@ -83,7 +83,7 @@ $sql_string = "select * from FacturasRIPS a, dbo.facturas b where a.Codigo = b.c
                 $texto =$texto.",".$fecha_fin;
                 $cont = $cont +1;       
             }
-            else if($cont == 4 && $eps == "EPS002")$texto =$texto.trim($sub_fila[21].' ');  
+            else if($cont == 4 && $eps == "EPS002")$texto =$texto.trim($sub_fila['codigo2']);  
             else $texto = $texto.$sub_fila[''.$cont];
             $cont++;
             }
@@ -100,15 +100,18 @@ fwrite($archivo, $texto);
 fclose($archivo);
 
 $texto = "";
-$sql_string = "select DISTINCT a.NumeroIdentificacion , * from PacientesRIPS1 a, facturas b where a.NumeroIdentificacion = b.documento";
+$sql_string = "select DISTINCT CodTipoIdentificacion, a.NumeroIdentificacion, CodEPS,CodTipoRegimen,
+PrimerApellido,SegundoApellido,PrimerNombre, SegundoNombre, Edad, unidad_edad,
+Sexo, CodDepartamento, CodMunicipio, ZonaResidencial 
+from PacientesRIPS1 a, facturas b where a.NumeroIdentificacion = b.documento";
     $stmt1 = sqlsrv_query( $conn, $sql_string , $params, $options );
      $CONT_US=0;
     while ($sub_fila = sqlsrv_fetch_array($stmt1, MYSQL_BOTH)) {
-        $cont=1;
+        $cont=0;
                 
-        while($cont<=14){
-            if($cont>1)$texto = $texto.",";
-            if($cont == 3) 
+        while($cont<=13){
+            if($cont>0)$texto = $texto.",";
+            if($cont == 2) 
                 $texto = $texto.$eps;
             else
                 $texto = $texto.$sub_fila[''.$cont];
