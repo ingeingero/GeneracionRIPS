@@ -1,3 +1,9 @@
+ALTER VIEW [dbo].[ServiciosRIPS]
+AS
+SELECT     dbo.ServiciosMedicos.ID, dbo.ServiciosMedicos.Nombre, dbo.SubSistemas.Codigo + dbo.ServiciosMedicos.Codigo AS CodCompleto -- dbo.SubSistemas.Codigo + dbo.ServiciosMedicos.Codigo 
+FROM         dbo.ServiciosMedicos INNER JOIN
+                      dbo.Sistemas ON dbo.ServiciosMedicos.IDSistemas = dbo.Sistemas.ID INNER JOIN
+                      dbo.SubSistemas ON dbo.ServiciosMedicos.IDSubsistemas = dbo.SubSistemas.ID
 
 -----------------------------------------------------------------------------------------------------------------
 ALTER VIEW [dbo].[ConsultasRIPS]
@@ -11,14 +17,14 @@ WHEN dbo.ServiciosRIPS.CodCompleto = '89898001' THEN '898001'
  else dbo.ServiciosRIPS.CodCompleto END CodCompleto ,
 
  '10' as diez, '13' as trece,
-CASE WHEN dbo.Diagnosticos.Codigo = '0' THEN 'Z719' ELSE dbo.Diagnosticos.Codigo END dx ,
+CASE WHEN dbo.Diagnosticos.Codigo = '0' OR dbo.Diagnosticos.Codigo = '' THEN 'Z719' ELSE dbo.Diagnosticos.Codigo END dx ,
 '' as uno, '' as dos, '' as tres, '1' unoo,
 case when dbo.DocsFacturasDetalles.Cantidad > 0 then CAST(dbo.DocsFacturasDetalles.VlrEPS/dbo.DocsFacturasDetalles.Cantidad AS INT) 
 else 0 end eps1
 
 , '0' as cero0,
 case when dbo.DocsFacturasDetalles.Cantidad > 0 then CAST(dbo.DocsFacturasDetalles.VlrEPS/dbo.DocsFacturasDetalles.Cantidad AS INT) 
-else 0 end eps2, dbo.DocsFacturas.Fecha as fecha2, cast(dbo.DocsFacturasDetalles.VlrPaciente as int) as paciente, dbo.DocsFacturasDetalles.Cantidad as cantidad, dbo.ServiciosRIPS.Nombre as ServicioNombre 
+else 0 end eps2, dbo.DocsFacturas.Fecha as fecha2, cast(dbo.DocsFacturasDetalles.VlrPaciente as int) as paciente, dbo.DocsFacturasDetalles.Cantidad as cantidad, dbo.ServiciosRIPS.Nombre as ServicioNombre, dbo.PacientesRIPS.Edad as PacienteEdad
 
 FROM         dbo.DocsConsultas INNER JOIN
                       dbo.PacientesRIPS ON dbo.DocsConsultas.IDPaciente = dbo.PacientesRIPS.ID INNER JOIN
@@ -43,14 +49,20 @@ FROM         dbo.DocsConsultas INNER JOIN
 ALTER VIEW [dbo].[ProcedimientosRIPS]
 AS
 SELECT      dbo.DocsFacturas.Codigo,'252900032901' as codigo_resolucion,dbo.PacientesRIPS.CodTipoIdentificacion AS CodTipoIdentificacionPaciente1,dbo.PacientesRIPS.NumeroIdentificacion AS CodPaciente1,CONVERT(VARCHAR(10), dbo.DocsFacturas.Fecha, 103) as fecha1,
-dbo.DocsFacturasDetalles.CodAutorizacion as CodAutorizacion, dbo.ServiciosRIPS.CodCompleto,'1' as uno,'4' as cuatro,'5' as cinco,
-CASE WHEN dbo.Diagnosticos.Codigo = '0' THEN '' ELSE dbo.Diagnosticos.Codigo END dx
+dbo.DocsFacturasDetalles.CodAutorizacion as CodAutorizacion,
+CASE --WHEN dbo.ServiciosRIPS.CodCompleto = '898001' THEN '898003'
+WHEN dbo.ServiciosRIPS.CodCompleto = 'S55115' THEN 'S55104'
+ else dbo.ServiciosRIPS.CodCompleto END CodCompleto ,
+
+
+'1' as uno,'4' as cuatro,'5' as cinco,
+CASE WHEN dbo.Diagnosticos.Codigo = '0' OR dbo.Diagnosticos.Codigo = '' THEN 'Z000' ELSE dbo.Diagnosticos.Codigo END dx
 ,'' as esp1,'' as esp2,
 case when dbo.DocsFacturasDetalles.Cantidad > 0 then CAST(dbo.DocsFacturasDetalles.VlrEPS/dbo.DocsFacturasDetalles.Cantidad AS INT) 
 else 0
 end eps, 
 
-dbo.DocsFacturas.Fecha as fecha2,CAST(dbo.DocsFacturasDetalles.VlrPaciente AS INT) as paciente, dbo.DocsFacturasDetalles.Cantidad as cantidad, dbo.ServiciosRIPS.Nombre as ServicioNombre 
+dbo.DocsFacturas.Fecha as fecha2,CAST(dbo.DocsFacturasDetalles.VlrPaciente AS INT) as paciente, dbo.DocsFacturasDetalles.Cantidad as cantidad, dbo.ServiciosRIPS.Nombre as ServicioNombre , dbo.PacientesRIPS.Edad as PacienteEdad
 
 FROM         dbo.DocsProcedimientos INNER JOIN
                       dbo.PacientesRIPS ON dbo.DocsProcedimientos.IDPaciente = dbo.PacientesRIPS.ID INNER JOIN
@@ -82,7 +94,8 @@ CREATE TABLE [dbo].[HC](
 	[tipo] [int] NULL,
 	[CodAutorizacion] [varchar](max) COLLATE Modern_Spanish_CI_AS NULL,
 	[cantidad] [int] NULL,
-	[nombre_servicio] [varchar](150) COLLATE Modern_Spanish_CI_AS NULL
+	[nombre_servicio] [varchar](150) COLLATE Modern_Spanish_CI_AS NULL,
+	[PacienteEdad] [varchar](150) COLLATE Modern_Spanish_CI_AS NULL
 ) ON [PRIMARY]
 
 
@@ -93,31 +106,30 @@ select a.fac, '252900032901' as habilitacion,
 
 
 CodTipoIdentificacionPaciente  = CASE 
-WHEN len(CodPaciente)<=9 THEN 'CC'
-WHEN len(CodPaciente)<=10 THEN 'RC'
-ELSE 'TI'
- END,
+WHEN PacienteEdad<10 AND PacienteEdad>= 0 THEN 'RC'
+WHEN PacienteEdad>=10 AND PacienteEdad<18 THEN 'TI'
+ELSE 'CC' END,
 
 
 REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion , CodCompleto, '10' as diez, '13' as trece, dx, '' as esp1,
-'' as esp2, '' as esp3 , '1' as uno , (valor_eps+valor_paciente) as total, valor_paciente, valor_eps  from HC a where  SUBSTRING(CodCompleto, 1, 3) = '890' ;
+'' as esp2, '' as esp3 , '1' as uno , (valor_eps+valor_paciente) as total, valor_paciente, valor_eps, PacienteEdad  from HC a where  SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 
 ------------------------------------------------------------------------------------------------------------------------
 Alter view [dbo].[RIPSAP] AS
 select a.fac, '252900032901' as habilitacion, 
 CodTipoIdentificacionPaciente  = CASE 
-WHEN len(CodPaciente)<=9 THEN 'CC'
-WHEN len(CodPaciente)<=10 THEN 'RC'
-ELSE 'TI' END,
+WHEN PacienteEdad<10 AND PacienteEdad>= 0 THEN 'RC'
+WHEN PacienteEdad>=10 AND PacienteEdad<18 THEN 'TI'
+ELSE 'CC' END,
 
 
 REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select top 1 CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion, 
 	 CodCompleto = CASE WHEN len(CodCompleto) > 6 THEN SUBSTRING(CodCompleto, 3, len(CodCompleto)) 
 
 		ELSE CodCompleto end
-, '1' as unoo, '4' as cuatro, '5' as cinco, dx as dx, '' as esp1,
-'' as esp2, cantidad ,  valor_eps  from HC a where  not SUBSTRING(CodCompleto, 1, 3) = '890' ;
+, '1' as unoo, '4' as cuatro, '5' as cinco, dx, '' as esp1,
+'' as esp2, '' as acto ,  valor_eps , PacienteEdad from HC a where  not SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 ---------------------------------------------------------------------------------------------------------------
 ALTER  VIEW [dbo].[PacientesRIPS1]
@@ -140,14 +152,14 @@ REPLACE(LTRIM(RTRIM(A.codigo)), '.', '') AS NumeroIdentificacion, G.Codigo AS Co
                       A.Apellido2 AS SegundoApellido, A.Nombre1 AS PrimerNombre, A.Nombre2 AS SegundoNombre , 
                        Edad = CASE 
 
-						/*WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) < 30 THEN DATEDIFF(d, 
+						WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) < 30 THEN DATEDIFF(d, 
                       A.FNacimiento, GETDATE()) WHEN DATEDIFF(d, A.FNacimiento, GETDATE()) >= 30 AND DATEDIFF(m, A.FNacimiento, GETDATE()) 
                       < 12 THEN DATEDIFF(m, A.FNacimiento, GETDATE()) WHEN DATEDIFF(yy, A.FNacimiento, GETDATE()) >= 1 THEN DATEDIFF(yy, A.FNacimiento, 
-                      GETDATE()) END,*/
-WHEN len(A.codigo)<=9 THEN ROUND(((78 - 21 -1) * RAND() + 21), 0)
+                      GETDATE()) END,
+/*WHEN len(A.codigo)<=9 THEN ROUND(((78 - 21 -1) * RAND() + 21), 0)
 WHEN len(A.codigo)<=10 THEN ROUND(((6 - 1 -1) * RAND() + 1), 0)
 ELSE ROUND(((17 - 10 -1) * RAND() + 10), 0) 
-END,
+END,*/
 
 
  '1' as unidad_edad, C.Codigo AS Sexo, '25' AS CodDepartamento, '290' AS CodMunicipio, F.Codigo AS ZonaResidencial, a.ID AS PacienteID
@@ -178,15 +190,16 @@ group by dbo.EPS.Codigo,dbo.EPS.Nombre,dbo.DocsFacturas.Codigo,dbo.DocsFacturas.
 ---------------------------------------------------------------------------------------------------------------
 CREATE TABLE [dbo].[facturas](
 	[codigo] [nchar](10) COLLATE Modern_Spanish_CI_AS NULL,
-	[documento] [varchar](50) COLLATE Modern_Spanish_CI_AS NULL
+	[documento] [varchar](50) COLLATE Modern_Spanish_CI_AS NULL,
+	[codigo2] [nchar](10) COLLATE Modern_Spanish_CI_AS NULL,
 ) ON [PRIMARY]
 
 
 ------------------------------------------------------------------------------------------------------------------
 
 truncate table HC;
-insert into HC select fac,CodTipoIdentificacionPaciente, CodPaciente,fecha2, CodCompleto, dx,eps1, paciente, '1', CodAutorizacion, cantidad, ServicioNombre from dbo.ConsultasRIPS where fecha2 >= '20100101'
-insert into HC select Codigo,CodTipoIdentificacionPaciente1, CodPaciente1,fecha2, CodCompleto, dx,eps, paciente, '2', CodAutorizacion, cantidad, ServicioNombre from dbo.ProcedimientosRIPS where fecha2 >= '20100101'
+insert into HC select fac,CodTipoIdentificacionPaciente, CodPaciente,fecha2, CodCompleto, dx,eps1, paciente, '1', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ConsultasRIPS where fecha2 >= '20100101'
+insert into HC select Codigo,CodTipoIdentificacionPaciente1, CodPaciente1,fecha2, CodCompleto, dx,eps, paciente, '2', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ProcedimientosRIPS where fecha2 >= '20100101'
 
 
 -------------------------------------------------------------------------------------------------------------------------
@@ -201,7 +214,7 @@ ROWTERMINATOR = '\n'
 
 ------------------------------------------------------------------------------------
 
-select fac, CodTipoIdentificacionPaciente, CodPaciente, fecha2, CodAutorizacion,
+select fac, CodTipoIdentificacionPaciente, CodPaciente, fecha2, (select top 1 CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion,
 CodCompleto = CASE WHEN len(CodCompleto) > 6 THEN SUBSTRING(CodCompleto, 3, len(CodCompleto)) 
 ELSE CodCompleto end,
 nombre_servicio,
@@ -237,7 +250,7 @@ a.IDBAS_ZonasResidenciales = l.ID AND
 j.IDDiagnosticosPpal = m.ID AND
 j.ID = n.ID AND
 n.IDBAS_IMC = o.ID AND
-j.Fecha > '20140101' 
+j.Fecha > '20140401' 
 ------------------------------------------------------------------------------------------------------------------------------
 SELECT *  FROM dbo.Pacientes a, dbo.BAS_Oficios b, BAS_Generos c, BAS_NivelesEducativos d, BAS_TiposDocIdentificacion e, EPS f,
 BAS_TiposDocIdentificacion g, BAS_TiposAfiliacion h
@@ -249,6 +262,8 @@ a.IDBAS_TiposDocIdentificacion = e.ID AND
 a.IDEPS = f.ID AND 
 a.IDBAS_TiposDocIdentificacion = g.ID AND
 a.IDBAS_TiposAfiliacion = h.ID
+--------------------------------------------------------------------------------------------
+
 
 
 

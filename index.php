@@ -1,9 +1,11 @@
 <?php
 $sufijo = "042014";
-$fecha_generacion = "05/05/2014";
-$fecha_ini = "01/04/2014";
-$fecha_fin = "30/04/2014";
-$eps = "EPS037";
+$fecha_generacion = "05/04/2014";
+$fecha_ini = "01/03/2014";
+$fecha_fin = "31/03/2014";
+$replace = "/03/";
+$replace1 = "2014";
+$eps = "RES004";
 ini_set('max_execution_time', 30000);
 $serverName = 'INGERA-VAIO\SQLEXPRESS';
 $connParams = array('UID'=>'sa', 'PWD'=>'sa', 'Database'=>'SUNTTEL_DBMEDICS','ReturnDatesAsStrings'=> true);
@@ -18,12 +20,18 @@ $texto = "";
 $sql_string = "select * from RIPSAP a, dbo.facturas b where a.fac = b.codigo";
     $stmt1 = sqlsrv_query( $conn, $sql_string , $params, $options );
     $CONT_AP = 0;
+
     while ($sub_fila = sqlsrv_fetch_array($stmt1, MYSQL_BOTH)) {
         $cont=0;
+       $fecha =  str_replace(substr($sub_fila[4], 2, 4),$replace,$sub_fila[4]);
+       $fecha =  str_replace(substr($fecha, 6, 4),$replace1,$fecha);
+       $fecha =  str_replace("31","30",$fecha);
         while($cont<=14){
             if($cont>0)$texto = $texto.",";
         
-             if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[17],' ');      
+             if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[17],' ');  
+             else if($cont == 4) $texto = $texto.$fecha;
+    
             else $texto = $texto.$sub_fila[''.$cont];  
             $cont++;
             }
@@ -44,13 +52,19 @@ $texto = "";
 $sql_string = "select * from RIPSAC a, dbo.facturas b where a.fac = b.codigo";
     $stmt1 = sqlsrv_query( $conn, $sql_string , $params, $options );
    $CONT_AC=0;
+
     while ($sub_fila = sqlsrv_fetch_array($stmt1, MYSQL_BOTH)) {
         $cont=0;
+          $fecha =  str_replace(substr($sub_fila[4], 2, 4),$replace,$sub_fila[4]);
+       $fecha =  str_replace(substr($fecha, 6, 4),$replace1,$fecha);
+       $fecha =  str_replace("31","30",$fecha);
+  
                 
         while($cont<=16){
             
             if($cont>0)$texto = $texto.",";            
-            if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[19],' ');      
+            if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[19],' '); 
+            else if($cont == 4) $texto = $texto.$fecha;
             else $texto = $texto.$sub_fila[''.$cont];                                                
            
         
@@ -100,19 +114,30 @@ fwrite($archivo, $texto);
 fclose($archivo);
 
 $texto = "";
-$sql_string = "select DISTINCT CodTipoIdentificacion, a.NumeroIdentificacion, CodEPS,CodTipoRegimen,
+$sql_string = "select DISTINCT a.NumeroIdentificacion,  CodTipoIdentificacion, a.NumeroIdentificacion, CodEPS,CodTipoRegimen,
 PrimerApellido,SegundoApellido,PrimerNombre, SegundoNombre, Edad, unidad_edad,
 Sexo, CodDepartamento, CodMunicipio, ZonaResidencial 
 from PacientesRIPS1 a, facturas b where a.NumeroIdentificacion = b.documento";
     $stmt1 = sqlsrv_query( $conn, $sql_string , $params, $options );
      $CONT_US=0;
+     $tipoDoc = "";
     while ($sub_fila = sqlsrv_fetch_array($stmt1, MYSQL_BOTH)) {
-        $cont=0;
-                
-        while($cont<=13){
-            if($cont>0)$texto = $texto.",";
-            if($cont == 2) 
+        $cont=1;
+          if ($sub_fila['Edad']<10) $tipoDoc = "RC";
+          else if ($sub_fila['Edad']>=10 && $sub_fila['Edad']<18 ) $tipoDoc = "TI";
+          else if ($sub_fila['Edad']>=18) $tipoDoc = "CC";
+          
+          if($sub_fila['Edad'] <0) {
+            $sub_fila[9] = 65;
+            $tipoDoc = "CC";
+            }
+        while($cont<=14){
+            if($cont>1)
+                $texto = $texto.",";
+            if($cont == 3) 
                 $texto = $texto.$eps;
+            else if($cont == 1)
+                $texto = $texto.$tipoDoc;
             else
                 $texto = $texto.$sub_fila[''.$cont];
             $cont++;
@@ -186,5 +211,4 @@ while ($fila = sqlsrv_fetch_array($stmt, MYSQL_NUM)) {
 }
 echo "</table>";
 //mysql_free_result($resultado);
-?>
 ?>
