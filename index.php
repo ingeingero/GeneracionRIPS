@@ -1,12 +1,12 @@
 <?php
-$sufijo = "042014";
-$fecha_generacion = "05/04/2014";
-$fecha_ini = "01/03/2014";
-$fecha_fin = "31/03/2014";
-$replace = "/03/";
+$sufijo = "052014";
+$fecha_generacion = "05/06/2014";
+$fecha_ini = "01/05/2014";
+$fecha_fin = "31/05/2014";
+$replace = "/05/";
 $replace1 = "2014";
-$eps = "RES004";
-ini_set('max_execution_time', 30000);
+$eps = "EPS033";
+ini_set('max_execution_time', 3000000);
 $serverName = 'INGERA-VAIO\SQLEXPRESS';
 $connParams = array('UID'=>'sa', 'PWD'=>'sa', 'Database'=>'SUNTTEL_DBMEDICS','ReturnDatesAsStrings'=> true);
 $conn = sqlsrv_connect($serverName, $connParams);
@@ -29,7 +29,7 @@ $sql_string = "select * from RIPSAP a, dbo.facturas b where a.fac = b.codigo";
         while($cont<=14){
             if($cont>0)$texto = $texto.",";
         
-             if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[17],' ');  
+             if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[18],' ');  
              else if($cont == 4) $texto = $texto.$fecha;
     
             else $texto = $texto.$sub_fila[''.$cont];  
@@ -63,7 +63,7 @@ $sql_string = "select * from RIPSAC a, dbo.facturas b where a.fac = b.codigo";
         while($cont<=16){
             
             if($cont>0)$texto = $texto.",";            
-            if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[19],' '); 
+            if($cont == 0 && $eps == "EPS002")$texto =$texto.trim($sub_fila[20],' '); 
             else if($cont == 4) $texto = $texto.$fecha;
             else $texto = $texto.$sub_fila[''.$cont];                                                
            

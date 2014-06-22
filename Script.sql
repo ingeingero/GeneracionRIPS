@@ -101,7 +101,7 @@ CREATE TABLE [dbo].[HC](
 
 ------------------------------------------------------------------------------------------------------------------------
 
-ALTER view [dbo].[RIPSAC] AS
+CREATE view [dbo].[RIPSAC] AS
 select a.fac, '252900032901' as habilitacion, 
 
 
@@ -111,12 +111,12 @@ WHEN PacienteEdad>=10 AND PacienteEdad<18 THEN 'TI'
 ELSE 'CC' END,
 
 
-REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion , CodCompleto, '10' as diez, '13' as trece, dx, '' as esp1,
+REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select top (1) CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion , CodCompleto, '10' as diez, '13' as trece, dx, '' as esp1,
 '' as esp2, '' as esp3 , '1' as uno , (valor_eps+valor_paciente) as total, valor_paciente, valor_eps, PacienteEdad  from HC a where  SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 
 ------------------------------------------------------------------------------------------------------------------------
-Alter view [dbo].[RIPSAP] AS
+CREATE view [dbo].[RIPSAP] AS
 select a.fac, '252900032901' as habilitacion, 
 CodTipoIdentificacionPaciente  = CASE 
 WHEN PacienteEdad<10 AND PacienteEdad>= 0 THEN 'RC'
@@ -132,7 +132,7 @@ REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), 
 '' as esp2, '' as acto ,  valor_eps , PacienteEdad from HC a where  not SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 ---------------------------------------------------------------------------------------------------------------
-ALTER  VIEW [dbo].[PacientesRIPS1]
+CREATE  VIEW [dbo].[PacientesRIPS1]
 AS
 SELECT       
 CodTipoIdentificacion = CASE 
@@ -177,8 +177,7 @@ FROM         dbo.Pacientes A INNER JOIN
                       dbo.BAS_TiposRegimenes L ON K.IDBAS_TiposRegimenes = L.ID
 
 --------------------------------------------------------------------------------------------------------------------
-
-ALTER VIEW [dbo].[FacturasRIPS] as
+CREATE VIEW [dbo].[FacturasRIPS] as
 select '252900032901' as habilitacion,'MEDSALUD IPS' as ips, 'NI' AS ni, '900013381' as nit, dbo.DocsFacturas.Codigo,'05/04/2014' as fecha_rips, '01/01/2014' as fecha_ini,'031/01/2014' as fecha_fin, dbo.EPS.Codigo  as eps_codigo, dbo.EPS.Nombre as eps_nombre, dbo.EPS.Codigo as eps_codigo2,'' as va1,'' as va2,cast(sum(dbo.DocsFacturasDetalles.VlrPaciente)as int) as Valortotalpaciente,'0' as cer1,'0' as cer2,cast(sum(dbo.DocsFacturasDetalles.VlrEPS)as int)AS ValortotalEPS, dbo.DocsFacturas.Fecha  as fecha2, dbo.Pacientes.Codigo as Paciente, dbo.DocsFacturas.IDPaciente  as PacienteID
  from dbo.DocsFacturas,dbo.DocsFacturasDetalles,dbo.Pacientes, dbo.EPS
 where 
@@ -198,8 +197,8 @@ CREATE TABLE [dbo].[facturas](
 ------------------------------------------------------------------------------------------------------------------
 
 truncate table HC;
-insert into HC select fac,CodTipoIdentificacionPaciente, CodPaciente,fecha2, CodCompleto, dx,eps1, paciente, '1', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ConsultasRIPS where fecha2 >= '20100101'
-insert into HC select Codigo,CodTipoIdentificacionPaciente1, CodPaciente1,fecha2, CodCompleto, dx,eps, paciente, '2', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ProcedimientosRIPS where fecha2 >= '20100101'
+insert into HC select fac,CodTipoIdentificacionPaciente, CodPaciente,fecha2, CodCompleto, dx,eps1, paciente, '1', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ConsultasRIPS --where fecha2 >= '20100101'
+insert into HC select Codigo,CodTipoIdentificacionPaciente1, CodPaciente1,fecha2, CodCompleto, dx,eps, paciente, '2', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ProcedimientosRIPS --where fecha2 >= '20100101'
 
 
 -------------------------------------------------------------------------------------------------------------------------
@@ -211,7 +210,7 @@ DATAFILETYPE = 'char',
 FIELDTERMINATOR = ';',
 ROWTERMINATOR = '\n'
 )
-
+select * from facturas ;
 ------------------------------------------------------------------------------------
 
 select fac, CodTipoIdentificacionPaciente, CodPaciente, fecha2, (select top 1 CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion,
@@ -227,6 +226,8 @@ valor_eps,
 (valor_eps * cantidad) as total_eps,
 ((valor_eps * cantidad)+ valor_paciente) as total
 from HC a, facturas b where a.fac = b.codigo; 
+
+select * from FacturasRIPS a, dbo.facturas b where a.Codigo = b.codigo
 
 ---------------------------------------------------------------------------------------------------------------
 
@@ -252,7 +253,7 @@ j.ID = n.ID AND
 n.IDBAS_IMC = o.ID AND
 j.Fecha > '20140401' 
 ------------------------------------------------------------------------------------------------------------------------------
-SELECT *  FROM dbo.Pacientes a, dbo.BAS_Oficios b, BAS_Generos c, BAS_NivelesEducativos d, BAS_TiposDocIdentificacion e, EPS f,
+SELECT  a.Codigo, g.Codigo FROM dbo.Pacientes a, dbo.BAS_Oficios b, BAS_Generos c, BAS_NivelesEducativos d, BAS_TiposDocIdentificacion e, EPS f,
 BAS_TiposDocIdentificacion g, BAS_TiposAfiliacion h
 where  
 a.IDBAS_Oficios = b.ID AND
@@ -264,9 +265,34 @@ a.IDBAS_TiposDocIdentificacion = g.ID AND
 a.IDBAS_TiposAfiliacion = h.ID
 --------------------------------------------------------------------------------------------
 
+select a.factura2, cc.CodAutorizacion from dbo.Autorizaciones a, DocsFacturas c, DocsFacturasDetalles cc 
+where  a.factura2 = c.Codigo and cc.IDDocsFacturas = c.ID order by cc.CodAutorizacion desc
+--SELECT * FROM Autorizaciones a LEFT JOIN DocsFacturas b ON a.factura1 = b.Codigo;
+
+--459598 
+------------------------------------------
+select * from RIPSAC a, dbo.facturas b where a.fac = b.codigo
+
+CREATE TABLE [dbo].[Autorizaciones](
+	[factura1] [int] NULL,
+	[factura2] [int] NULL
+) ON [PRIMARY]
 
 
+------------------------------------------------------------------------------
 
+--select * from hc;
 
+select 
+factura1 = CASE 
+WHEN a.fac > b.fac THEN CONVERT(VARCHAR, b.fac)+'*'+b.nombre_servicio+'*'+CONVERT(VARCHAR(10), b.fecha2, 103)
+WHEN b.fac > a.fac THEN CONVERT(VARCHAR, a.fac)+'*'+a.nombre_servicio+'*'+CONVERT(VARCHAR(10), a.fecha2, 103)
+end,
+factura2 = CASE 
+WHEN a.fac > b.fac THEN CONVERT(VARCHAR, a.fac)+'*'+a.nombre_servicio+'*'+CONVERT(VARCHAR(10), a.fecha2, 103)
+WHEN b.fac > a.fac THEN CONVERT(VARCHAR, b.fac)+'*'+b.nombre_servicio+'*'+CONVERT(VARCHAR(10), b.fecha2, 103)
+end  
+
+from hc a, hc1 b where a.CodPaciente = b.CodPaciente and a.fecha2 = b.fecha2 and a.nombre_servicio = b.nombre_servicio and a.fac <> b.fac;
 
 
