@@ -225,7 +225,8 @@ else 0 end,
 valor_eps,
 (valor_eps * cantidad) as total_eps,
 ((valor_eps * cantidad)+ valor_paciente) as total
-from HC a, facturas b where a.fac = b.codigo; 
+from HC a, facturas b where a.fac = b.codigo
+order by fac
 
 select * from FacturasRIPS a, dbo.facturas b where a.Codigo = b.codigo
 
@@ -294,5 +295,22 @@ WHEN b.fac > a.fac THEN CONVERT(VARCHAR, b.fac)+'*'+b.nombre_servicio+'*'+CONVER
 end  
 
 from hc a, hc1 b where a.CodPaciente = b.CodPaciente and a.fecha2 = b.fecha2 and a.nombre_servicio = b.nombre_servicio and a.fac <> b.fac;
+
+
+--------------------------------------------------------
+
+
+USE SUNTTEL_DBMEDICS;
+update DocsFacturasDetalles
+set 
+dbo.DocsFacturasDetalles.VlrEPS = '0',
+dbo.DocsFacturasDetalles.VlrPaciente = '0',
+dbo.DocsFacturasDetalles.cantidad = '0',
+dbo.DocsFacturasDetalles.CodAutorizacion = dbo.facturas.codigo2
+from
+dbo.DocsFacturas, dbo.DocsFacturasDetalles,dbo.facturas
+where 
+dbo.DocsFacturas.ID = dbo.DocsFacturasDetalles.IDDocsFacturas and 
+dbo.DocsFacturas.Codigo = dbo.facturas.codigo 
 
 

@@ -1,11 +1,11 @@
 <?php
-$sufijo = "052014";
-$fecha_generacion = "05/06/2014";
-$fecha_ini = "01/05/2014";
-$fecha_fin = "31/05/2014";
-$replace = "/05/";
+$sufijo = "072014";
+$fecha_generacion = "05/08/2014";
+$fecha_ini = "01/07/2014";
+$fecha_fin = "31/07/2014";
+$replace = "/07/";
 $replace1 = "2014";
-$eps = "EPS033";
+$eps = "EPS002";
 ini_set('max_execution_time', 3000000);
 $serverName = 'INGERA-VAIO\SQLEXPRESS';
 $connParams = array('UID'=>'sa', 'PWD'=>'sa', 'Database'=>'SUNTTEL_DBMEDICS','ReturnDatesAsStrings'=> true);
