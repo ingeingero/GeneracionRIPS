@@ -5,7 +5,7 @@ $fecha_ini = "01/07/2014";
 $fecha_fin = "31/07/2014";
 $replace = "/07/";
 $replace1 = "2014";
-$eps = "EPS002";
+$eps = "EMP002";
 ini_set('max_execution_time', 3000000);
 $serverName = 'INGERA-VAIO\SQLEXPRESS';
 $connParams = array('UID'=>'sa', 'PWD'=>'sa', 'Database'=>'SUNTTEL_DBMEDICS','ReturnDatesAsStrings'=> true);
@@ -97,7 +97,10 @@ $sql_string = "select * from FacturasRIPS a, dbo.facturas b where a.Codigo = b.c
                 $texto =$texto.",".$fecha_fin;
                 $cont = $cont +1;       
             }
-            else if($cont == 4 && $eps == "EPS002")$texto =$texto.trim($sub_fila['codigo2']);  
+            else if($cont == 4 && $eps == "EPS002")$texto =$texto.trim($sub_fila['codigo2']); 
+            else if($cont == 5) $texto = $texto.$fecha_generacion; 
+            else if($cont == 8) $texto = $texto.$eps; 
+            else if($cont == 10) $texto = $texto.$eps; 
             else $texto = $texto.$sub_fila[''.$cont];
             $cont++;
             }
