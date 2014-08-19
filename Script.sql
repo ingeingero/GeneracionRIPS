@@ -112,7 +112,7 @@ ELSE 'CC' END,
 
 
 REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), fecha2, 103) as fecha,(select top (1) CodAutorizacion from HC b where b.fac = a.fac and LEN(b.CodAutorizacion) > 3 ) as CodAutorizacion , CodCompleto, '10' as diez, '13' as trece, dx, '' as esp1,
-'' as esp2, '' as esp3 , '1' as uno , (valor_eps+valor_paciente) as total, valor_paciente, valor_eps, PacienteEdad  from HC a where  SUBSTRING(CodCompleto, 1, 3) = '890' ;
+'' as esp2, '' as esp3 , '1' as uno , (valor_eps+valor_paciente) as total, valor_paciente, valor_total_eps, PacienteEdad  from HC a where  SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ REPLACE(LTRIM(RTRIM(CodPaciente)), '.', '') as CodPaciente,CONVERT(VARCHAR(10), 
 
 		ELSE CodCompleto end
 , '1' as unoo, '4' as cuatro, '5' as cinco, dx, '' as esp1,
-'' as esp2, '' as acto ,  valor_eps , PacienteEdad from HC a where  not SUBSTRING(CodCompleto, 1, 3) = '890' ;
+'' as esp2, '' as acto ,  valor_total_eps , PacienteEdad from HC a where  not SUBSTRING(CodCompleto, 1, 3) = '890' ;
 
 ---------------------------------------------------------------------------------------------------------------
 CREATE  VIEW [dbo].[PacientesRIPS1]
@@ -199,12 +199,20 @@ CREATE TABLE [dbo].[facturas](
 truncate table HC;
 insert into HC select fac,CodTipoIdentificacionPaciente, CodPaciente,fecha2, CodCompleto, dx,eps1, paciente, '1', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ConsultasRIPS --where fecha2 >= '20100101'
 insert into HC select Codigo,CodTipoIdentificacionPaciente1, CodPaciente1,fecha2, CodCompleto, dx,eps, paciente, '2', CodAutorizacion, cantidad, ServicioNombre, PacienteEdad from dbo.ProcedimientosRIPS --where fecha2 >= '20100101'
-
+update HC set valor_total_eps = cantidad * valor_eps;
 
 -------------------------------------------------------------------------------------------------------------------------
 
 truncate table facturas;
 bulk INSERT dbo.facturas FROM 'C:\subir.csv'
+WITH (
+DATAFILETYPE = 'char',
+FIELDTERMINATOR = ';',
+ROWTERMINATOR = '\n'
+)
+
+truncate table cuentas_contables;
+bulk INSERT dbo.cuentas_contables FROM 'C:\cuentas.csv'
 WITH (
 DATAFILETYPE = 'char',
 FIELDTERMINATOR = ';',
